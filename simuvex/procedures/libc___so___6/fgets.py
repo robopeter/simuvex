@@ -41,10 +41,18 @@ class fgets(simuvex.SimProcedure):
         # XXX: this is a HACK to determine if r is 0 because there is a newline at the first index or
         # if r is 0 because there cannot be any newline
         errored = False
-        if not self.state.se.satisfiable(extra_constraints=(r > 0,)):
-            errored = True
-            if self.state.se.solution(mem.load(0, 1), self.state.se.BVV('\n')):
-                errored = False
+        
+        # Not sure if this is the best way to do this... I'm really just trying to find if r==pos 
+        # but I have to take into account the fact that these could be symoblic... 
+        # The way it is things could go south if either value is symbolic  
+        # This way works with concrete values
+        if self.state.se.any_int(r) == self.state.se.any_int(pos):
+            
+            if not self.state.se.satisfiable(extra_constraints=(r > pos,)):
+                
+                errored = True
+                if self.state.se.solution(mem.load(pos, 1), self.state.se.BVV('\n')):
+                    errored = False
 
         # make sure we only read up to size - 1
         read_size = self.state.se.If(size == 0, 0, size - 1)
